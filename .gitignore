@@ -1,0 +1,12 @@
+graph_outputs/
+plot_outputs
+Py_export/
+R_export/
+SQL_export/
+*.py[cod]
+.Rhistory
+scripts/outside_sources/
+jflowmap/graph_outputs/
+jflowmap/input_files/
+jflowmap/us-background.png
+outside_source_data/
