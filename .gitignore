@@ -10,3 +10,5 @@ jflowmap/graph_outputs/
 jflowmap/input_files/
 jflowmap/us-background.png
 outside_source_data/
+gephi/input_files/
+gephi/graph_outputs/

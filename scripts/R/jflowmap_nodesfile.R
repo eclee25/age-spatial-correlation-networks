@@ -90,7 +90,7 @@ orientation <- c(30.82,-98.57,0)
 scale <- 100
 proj <- mapproject(y=as.numeric(new4$lat), x=as.numeric(new4$long), projection=projection, orientation=orientation)
 
-# export data frame
+# export flows projected coordinates
 exp <- data.frame(Code=as.character(new4$zip3), Name=as.character(new4$zip3), stringsAsFactors=FALSE)
 exp$Lat <- proj$y*scale
 exp$Lon <- proj$x*scale
@@ -98,6 +98,13 @@ exp$Lon <- proj$x*scale
 # 9/17/14 13:25
 setwd('/home/elee/Dropbox/Elizabeth_Bansal_Lab/SDI_Data/age_spatial_correlation_networks/jflowmap/input_files')
 write.csv(exp, 'zip_nodes.csv', row.names=FALSE)
+
+# export lat long coordinates for gephi
+exp2 <- data.frame(zip3=as.character(new4$zip3), lat=as.numeric(new4$lat), long=as.numeric(new4$long), stringsAsFactors=FALSE)
+
+# 9/18/14 11:33
+setwd('/home/elee/Dropbox/Elizabeth_Bansal_Lab/SDI_Data/age_spatial_correlation_networks/gephi/input_files')
+write.csv(exp2, 'zip3_latlong.csv', row.names=FALSE)
 
 # export list of zip3s in territories, AK, and HI
 terr_zips <- orig[(orig$STATE %in% excludeSTATE),]$zip3
