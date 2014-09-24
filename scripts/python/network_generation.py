@@ -28,6 +28,9 @@ import networkx as nx
 ##############################################
 ### (pre)set parameters ### 
 sp_seasons = range(2,11)
+sp_HHSregions = range(1,11)
+sp_fluweeklabels = range(40,54) # week number labels for plots vs. time
+sp_fluweeklabels.extend(range(1,21))
 
 ##############################################
 ### call parameters ### 
@@ -71,6 +74,23 @@ def import_network(infile):
 		Graph.add_edge(*edge_ls)
 
 	return Graph
+
+##############################################
+def import_zip3_region_data(infile):
+	''' Import crosswalk of zip3 and HHS region from explore/ project (R_export). Returns one dict: dict_zip3_HHS[zip3] = HHS region number.
+	'''
+	main(import_zip3_region_data)
+	# init dict
+	dict_zip3_HHS = {}
+	# data import
+	infile.readline() # rm header from R export
+	csvfile = csv.reader(infile, delimiter=',')
+	for row in csvfile:
+		zip3, HHSreg = str(row[0]), int(row[8])
+		# assign data to dict
+		dict_zip3_HHS[zip3] = HHSreg
+
+	return dict_zip3_HHS
 
 ##############################################
 ## processing functions ##
