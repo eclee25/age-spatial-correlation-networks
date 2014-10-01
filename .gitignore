@@ -12,3 +12,4 @@ jflowmap/us-background.png
 outside_source_data/
 gephi/input_files/
 gephi/graph_outputs/
+scripts/python/*_check.py
