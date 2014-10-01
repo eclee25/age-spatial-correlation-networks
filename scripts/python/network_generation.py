@@ -32,12 +32,26 @@ sp_HHSregions = range(1,11)
 sp_fluweeklabels = range(40,54) # week number labels for plots vs. time
 sp_fluweeklabels.extend(range(1,21))
 
+# keywords (function: crosscorrelation_edgelist)
+sp_threshold_kwargs1 = {'percent':90}
+sp_threshold_kwargs2 = {'threshold':0.8}
+sp_threshold_kwargs3 = {'percent':99}
+# keywords (function: timeseries_crosscorrelations)
+sp_TSdata_method_kwargs1 = {'TS data': 'raw', 'method':'Pearson'}
+sp_TSdata_method_kwargs2 = {'TS data': 'fd', 'method':'Pearson'} # fd = first differenced
+sp_TSdata_method_kwargs3 = {'TS data': 'zn', 'method':'Pearson'} # zn = z-normalized
+
+
 ##############################################
 ### call parameters ### 
 # calls preset parameters or otherwise sets frequently changing parameters
-cp_threshold_kwargs = {'percent':90} # crosscorrelation_edgelist
 
-##############################################
+# keywords (function: crosscorrelation_edgelist)
+cp_threshold_kwargs = sp_threshold_kwargs3
+# keywords (function: timeseries_crosscorrelations)
+cp_TSdata_method_kwargs = sp_TSdata_method_kwargs3
+
+1##############################################
 ### import functions ###
 ##############################################
 def import_seasonweek_data(infile):
@@ -124,7 +138,7 @@ def sortedlists_week_zip3(dict_weekZip3_iliVisit):
 	return list_week, list_zip3
 
 ##############################################
-def timeseries_crosscorrelations(dict_zip3_incidTS):
+def timeseries_crosscorrelations(dict_zip3_incidTS, **kwargs):
 	''' Calculate cross-correlations between each pair of zip3s for their flu season incidence time series. Pearson's r is the default method for calculating time series correlations. Returns one dict: dict_zip3pair_crosscorr[(zip_1, zip_2)] = corr_coefficient
 	'''
 	main(timeseries_crosscorrelations)
@@ -146,11 +160,27 @@ def timeseries_crosscorrelations(dict_zip3_incidTS):
 			continue
 		else:
 			ct+=1
-			list_zip_1 = dict_zip3_incidTS[zip_1]
-			list_zip_2 = dict_zip3_incidTS[zip_2]
-			corr_coefficient = stats.pearsonr(list_zip_1, list_zip_2)
+			TSdata, method = kwargs.get('TS data'), kwargs.get('method')
+			# 9/29/14 kwargs control flow
+			if TSdata == 'raw':
+				list_zip_1 = dict_zip3_incidTS[zip_1]
+				list_zip_2 = dict_zip3_incidTS[zip_2]
+			elif TSdata == 'fd':
+				list_zip_1 = np.diff(dict_zip3_incidTS[zip_1]) # first diff
+				list_zip_2 = np.diff(dict_zip3_incidTS[zip_2])
+			elif TSdata == 'zn':
+				mn1, sd1 = np.mean(dict_zip3_incidTS[zip_1]), np.std(dict_zip3_incidTS[zip_1])
+				mn2, sd2 = np.mean(dict_zip3_incidTS[zip_2]), np.std(dict_zip3_incidTS[zip_2])
+				list_zip_1 = [(incid-mn1)/sd1 for incid in dict_zip3_incidTS[zip_1]] # z-normalized
+				list_zip_2 = [(incid-mn2)/sd2 for incid in dict_zip3_incidTS[zip_2]]
+			if method == 'Pearson':
+				corr_coefficient = stats.pearsonr(list_zip_1, list_zip_2)[0]
+			elif method == 'Sax':
+				continue
+			# assign correlation to dictionary 
 			dict_zip3pair_crosscorr[(zip_1, zip_2)] = corr_coefficient
 	print ct, 'zip3 pair correlations calculated'
+	print 'with %s data and %s method' %(TSdata, method)
 
 	return dict_zip3pair_crosscorr
 
@@ -160,11 +190,14 @@ def crosscorrelation_edgelist(dict_zip3pair_crosscorr, **kwargs):
 	'''
 	main(crosscorrelation_edgelist)
 	# list of all correlations
-	all_corrs = [dict_zip3pair_crosscorr[key][0] for key in dict_zip3pair_crosscorr]
-	threshold = kwargs.get('threshold')
-	threshold = np.percentile(all_corrs, kwargs.get('percent'))
+	all_corrs = [dict_zip3pair_crosscorr[key] for key in dict_zip3pair_crosscorr]
+	# 9/29/14 kwargs control flow
+	if kwargs.get('threshold'):
+		threshold = kwargs.get('threshold')
+	elif kwargs.get('percent'):
+		threshold = np.percentile(all_corrs, kwargs.get('percent'))
 	# correlation edgelist is filtered by threshold
-	dict_zip3pairFilt_crosscorr = dict((key, dict_zip3pair_crosscorr[key]) for key in dict_zip3pair_crosscorr if dict_zip3pair_crosscorr[key][0] >= threshold)
+	dict_zip3pairFilt_crosscorr = dict((key, dict_zip3pair_crosscorr[key]) for key in dict_zip3pair_crosscorr if dict_zip3pair_crosscorr[key] >= threshold)
 
 	print 'correlation threshold:', threshold
 	print 'number of zip3 pairs:', len(dict_zip3pairFilt_crosscorr)
@@ -196,7 +229,7 @@ def write_flowscsv_jflowmap(dict_zip3pairFilt_crosscorr, filename):
 	with open(filename, 'w+') as fwriter:
 		fwriter.write("%s,%s,%s\n" %('Origin','Dest','Correlation'))
 		for key, value in dict_zip3pairFilt_crosscorr.items():
-			fwriter.write("%s,%s,%s\n" %(key[0], key[1], value[0]))
+			fwriter.write("%s,%s,%s\n" %(key[0], key[1], value))
 
 
 ##############################################

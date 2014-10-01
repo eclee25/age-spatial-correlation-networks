@@ -26,7 +26,10 @@ import network_generation as ng
 ### data structures ###
 
 ### parameters ###
-seasons = range(2,11)
+seasons = ng.sp_seasons
+# 9/30/14 added kwargs
+kwargs_TSdata_method = ng.cp_TSdata_method_kwargs
+TSdata, method = kwargs_TSdata_method.values()
 
 ### import data ###
 for snum in seasons:
@@ -34,19 +37,19 @@ for snum in seasons:
 	filein = open(basefile,'r')
 	d_week_weeknum, d_weekZip3_iliVisit, d_zip3_pop = ng.import_seasonweek_data(filein)
 	d_zip3_iliTS, d_zip3_incidTS = ng.seasonweek_timeseries(d_weekZip3_iliVisit, d_zip3_pop)
-	d_zip3pair_crosscorr = ng.timeseries_crosscorrelations(d_zip3_incidTS)
+	d_zip3pair_crosscorr = ng.timeseries_crosscorrelations(d_zip3_incidTS, **kwargs_TSdata_method)
 
 ### program ###
 
 	# convert to numpy array to use isnan function
-	cross_corr = np.array([d_zip3pair_crosscorr[key][0] for key in d_zip3pair_crosscorr])
+	cross_corr = np.array([d_zip3pair_crosscorr[key] for key in d_zip3pair_crosscorr])
 
 	fig1 = plt.figure()
 	ax1 = fig1.add_subplot(111)
 	n, bins, patches = ax1.hist(cross_corr[~np.isnan(cross_corr)], bins=50)
 	ax1.set_xlabel('pairwise cross-correlation')
 	ax1.set_ylabel('number of zip3 pairs')
-	plt.savefig('/home/elee/Dropbox/Elizabeth_Bansal_Lab/SDI_Data/age_spatial_correlation_networks/plot_outputs/hist_pairwiseZip3_pearson_S%s.png' %(snum), transparent=False, bbox_inches='tight', pad_inches=0)
+	plt.savefig('/home/elee/Dropbox/Elizabeth_Bansal_Lab/SDI_Data/age_spatial_correlation_networks/plot_outputs/hist_pairwiseZip3_%s%s_S%s.png' %(TSdata, method, snum), transparent=False, bbox_inches='tight', pad_inches=0)
 	plt.close()
 	# plt.show()
 

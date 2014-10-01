@@ -28,13 +28,15 @@ import network_generation as ng
 
 ### parameters ###
 seasons = range(2,11)
-kwargs_threshold = {'percent':90}
+kwargs_threshold = ng.cp_threshold_kwargs
+kwargs_TSdata_method = ng.cp_TSdata_method_kwargs
+# kwarg assignment
+threshold_type, value = kwargs_threshold.items()[0]
+TSdata, method = kwargs_TSdata_method.values()
 
 ### import data ###
-threshold_type, value = kwargs_threshold.items()[0]
-
 for snum in seasons:
-	base_edgelist = '/home/elee/Dropbox/Elizabeth_Bansal_Lab/SDI_Data/age_spatial_correlation_networks/Py_export/edgelists/seasonweek_total_edgelist_pearson_%s%s_S%s.csv' %(threshold_type, value, snum)
+	base_edgelist = '/home/elee/Dropbox/Elizabeth_Bansal_Lab/SDI_Data/age_spatial_correlation_networks/Py_export/edgelists/seasonweek_total_edgelist_%s%s_%s%s_S%s.csv' %(TSdata, method, threshold_type, value, snum)
 	graphfile = open(base_edgelist,'r')
 	G = ng.import_network(graphfile)
 
@@ -52,11 +54,11 @@ for snum in seasons:
 	plt.axvline(x=mean_degree, color = 'r')
 	plt.xlabel('number of correlated zip3s')
 	plt.ylabel('zip3 count')
-	plt.xlim([0,375])
-	plt.ylim([0,45])
+	plt.xlim([0,100])
+	# plt.ylim([0,45])
 	plt.title('Nodes: %s, Uq Edges: %s, Mean Degree: %s' %(nodes, edges, mean_degree))
 
 	# save figure
-	fname = '/home/elee/Dropbox/Elizabeth_Bansal_Lab/SDI_Data/age_spatial_correlation_networks/plot_outputs/degreeDist_seasonweek_total_edgelist_pearson_%s%s_S%s.png' %(threshold_type, value, snum)
+	fname = '/home/elee/Dropbox/Elizabeth_Bansal_Lab/SDI_Data/age_spatial_correlation_networks/plot_outputs/degreeDist_seasonweek_total_edgelist_%s%s_%s%s_S%s.png' %(TSdata, method, threshold_type, value, snum)
 	plt.savefig(fname, transparent=False, bbox_inches='tight', pad_inches=0)
 	plt.close()
