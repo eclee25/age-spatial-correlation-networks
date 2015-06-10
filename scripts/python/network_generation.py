@@ -130,6 +130,40 @@ def import_network(infile):
 	return Graph
 
 ##############################################
+def import_network_continentalUS(infile, list_excluded_zips):
+	''' Import edgelist into graph object, removing zip3s outside of the continental US. This network should be used for visualization purposes only. Returns graph object.
+	'''
+	main(import_network_continentalUS)
+	# create empty network
+	Graph = nx.Graph()
+	for edge in infile:
+		edge_ls = edge.strip().split(',')
+		zip_1, zip_2 = edge_ls
+		# exclude edges with at least one zip3 in the excluded zips list
+		if zip_1 not in list_excluded_zips and zip_2 not in list_excluded_zips: 
+			Graph.add_edge(*edge_ls)
+
+	return Graph
+
+##############################################
+def import_zip3_latLng(infile):
+	''' Import latitude and longitude coordinates for each zip3 from outside_source_data/zip3_latlong. Returns two dicts: dict_zip3_lat[zip3] = lat, dict_zip3_lng[zip3] = lng.
+	'''
+	main(import_zip3_latLng)
+	# init dicts
+	dict_zip3_lat, dict_zip3_lng = {},{}
+	# data import
+	infile.readline() # rm header
+	csvfile = csv.reader(infile, delimiter=',')
+	for row in csvfile:
+		zip3, lat, lng = str(row[0]), float(row[1]), float(row[2])
+		# assign data to dict
+		dict_zip3_lat[zip3] = lat
+		dict_zip3_lng[zip3] = lng
+
+	return dict_zip3_lat, dict_zip3_lng
+
+##############################################
 def import_zip3_region_data(infile):
 	''' Import crosswalk of zip3 and HHS region from explore/ project (R_export). Returns one dict: dict_zip3_HHS[zip3] = HHS region number.
 	'''
@@ -145,6 +179,22 @@ def import_zip3_region_data(infile):
 		dict_zip3_HHS[zip3] = HHSreg
 
 	return dict_zip3_HHS
+
+##############################################
+def import_exclude_zip3s(infile):
+	''' Import list of zip3s to exclude from analysis (eg. zip3s not on the continental US). These data are excluded to create a nicer graph/map visualization. Returns one list of zip3s to exclude.
+	'''
+	main(import_exclude_zip3s)
+	infile.readline()
+	noncontzips = csv.reader(infile, delimiter=',')
+	# init list
+	list_excluded_zips = []
+	# import list of zip3s to exclude
+	for item in noncontzips:
+		zip3 = str(item[0])
+		list_excluded_zips.append(zip3)
+
+	return list_excluded_zips
 
 ##############################################
 ## processing functions ##
@@ -211,6 +261,51 @@ def bin_smallage_age_pop(dict_yearZip3Smallage_pop):
 			dict_yearZip3Age_pop[(yr, zip3, 'E')] = sum(E)
 
 	return dict_yearZip3Age_pop
+
+##############################################
+def crosscorrelation_edgelist(dict_zip3pair_crosscorr, **kwargs):
+	''' Create zip3 network edgelist based on cross-correlations dictionary and a threshold. Returns one dict with edgelist as keys and cross-correlations as values: dict_zip3pair_filtered[(zip_1, zip_2)] = corr_coefficient; returns threshold value that defines edge existence between zip3s.
+	'''
+	main(crosscorrelation_edgelist)
+	# list of all correlations
+	all_corrs = [dict_zip3pair_crosscorr[key] for key in dict_zip3pair_crosscorr]
+	# 9/29/14 kwargs control flow
+	if kwargs.get('threshold'):
+		threshold = kwargs.get('threshold')
+	elif kwargs.get('percent'):
+		threshold = np.percentile(all_corrs, kwargs.get('percent'))
+	# correlation edgelist is filtered by threshold
+	dict_zip3pairFilt_crosscorr = dict((key, dict_zip3pair_crosscorr[key]) for key in dict_zip3pair_crosscorr if dict_zip3pair_crosscorr[key] >= threshold)
+
+	print 'correlation threshold:', threshold
+	print 'number of zip3 pairs:', len(dict_zip3pairFilt_crosscorr)
+
+	return dict_zip3pairFilt_crosscorr, threshold
+
+##############################################
+def exclude_noncontinental_zip3s(dict_zip3_iliTS, dict_zip3_incidTS, exclude_list):
+	''' Remove non-continental zip3s from dict_zip3_iliTS and dict_zip3_incidTS for cleaner jflowmap flows files.
+	'''
+	main(exclude_noncontinental_zip3s)
+	# remove non-continental zip3s from ili dict
+	dict_zip3_iliTS_continental = dict((key, dict_zip3_iliTS[key]) for key in dict_zip3_iliTS if key not in exclude_list)
+	# remove non-continental zip3s from incid dict
+	dict_zip3_incidTS_continental = dict((key, dict_zip3_incidTS[key]) for key in dict_zip3_incidTS if key not in exclude_list)
+
+	print len(dict_zip3_incidTS_continental)
+
+	return dict_zip3_iliTS_continental, dict_zip3_incidTS_continental
+
+##############################################
+def filter_latlong_dicts(dict_zip3_lat, dict_zip3_lng, Graph):
+	''' Remove zip3s from lat/long dictionaries if the node is not represented in the network. Renders the set_node_attributes function easier to use. Returns two dicts: dict_zip3filt_lat[zip3] = latitude; dict_zip3filt_lng[zip3] = longitude.
+	'''
+	main(filter_latlong_dicts)
+	# remove zip3s from dict if they are not in the graph
+	dict_zip3filt_lat = dict((zip3, dict_zip3_lat[zip3]) for zip3 in Graph)
+	dict_zip3filt_lng = dict((zip3, dict_zip3_lng[zip3]) for zip3 in Graph)
+
+	return dict_zip3filt_lat, dict_zip3filt_lng
 
 ##############################################
 def prep_age_seasonweek_timeseries(dict_weekZip3Age_ili, dict_yearZip3Age_pop, agegroupCode, season):
@@ -304,39 +399,6 @@ def timeseries_crosscorrelations(dict_zip3_incidTS, **kwargs):
 
 	return dict_zip3pair_crosscorr
 
-##############################################
-def crosscorrelation_edgelist(dict_zip3pair_crosscorr, **kwargs):
-	''' Create zip3 network edgelist based on cross-correlations dictionary and a threshold. Returns one dict with edgelist as keys and cross-correlations as values: dict_zip3pair_filtered[(zip_1, zip_2)] = corr_coefficient; returns threshold value that defines edge existence between zip3s.
-	'''
-	main(crosscorrelation_edgelist)
-	# list of all correlations
-	all_corrs = [dict_zip3pair_crosscorr[key] for key in dict_zip3pair_crosscorr]
-	# 9/29/14 kwargs control flow
-	if kwargs.get('threshold'):
-		threshold = kwargs.get('threshold')
-	elif kwargs.get('percent'):
-		threshold = np.percentile(all_corrs, kwargs.get('percent'))
-	# correlation edgelist is filtered by threshold
-	dict_zip3pairFilt_crosscorr = dict((key, dict_zip3pair_crosscorr[key]) for key in dict_zip3pair_crosscorr if dict_zip3pair_crosscorr[key] >= threshold)
-
-	print 'correlation threshold:', threshold
-	print 'number of zip3 pairs:', len(dict_zip3pairFilt_crosscorr)
-
-	return dict_zip3pairFilt_crosscorr, threshold
-
-##############################################
-def exclude_noncontinental_zip3s(dict_zip3_iliTS, dict_zip3_incidTS, exclude_list):
-	''' Remove non-continental zip3s from dict_zip3_iliTS and dict_zip3_incidTS for cleaner jflowmap flows files.
-	'''
-	main(exclude_noncontinental_zip3s)
-	# remove non-continental zip3s from ili dict
-	dict_zip3_iliTS_continental = dict((key, dict_zip3_iliTS[key]) for key in dict_zip3_iliTS if key not in exclude_list)
-	# remove non-continental zip3s from incid dict
-	dict_zip3_incidTS_continental = dict((key, dict_zip3_incidTS[key]) for key in dict_zip3_incidTS if key not in exclude_list)
-
-	print len(dict_zip3_incidTS_continental)
-
-	return dict_zip3_iliTS_continental, dict_zip3_incidTS_continental
 
 ##############################################
 ## fixed calls ##

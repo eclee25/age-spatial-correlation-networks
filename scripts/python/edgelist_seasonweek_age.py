@@ -33,13 +33,10 @@ threshold_type, value = kwargs_threshold.items()[0]
 TSdata, method = kwargs_TSdata_method.values()
 agecodes = ng.sp_agegroupcodes
 
-### import list of non-continental zip3s to exclude from analysis ###
+### import list of non-continental zip3s to exclude from plot ###
 noncontzipsin = open('/home/elee/Dropbox/Elizabeth_Bansal_Lab/SDI_Data/age_spatial_correlation_networks/R_export/non_continental_zip3s.csv', 'r')
-noncontzipsin.readline()
-noncont = csv.reader(noncontzipsin, delimiter=',')
-for item in noncont:
-	zip3 = str(item[0])
-	excl_zips.append(zip3)
+# 10/3/14 converted to function import
+excl_zips = ng.import_exclude_zip3s(noncontzipsin)
 
 ### import and process pop data ###
 ## NB. pop data includes all years and age groups

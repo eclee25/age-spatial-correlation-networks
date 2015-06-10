@@ -27,7 +27,7 @@ import network_generation as ng
 
 
 ### parameters ###
-seasons = range(2,11)
+seasons = ng.sp_seasons
 kwargs_threshold = ng.cp_threshold_kwargs
 kwargs_TSdata_method = ng.cp_TSdata_method_kwargs
 threshold_type, value = kwargs_threshold.items()[0]

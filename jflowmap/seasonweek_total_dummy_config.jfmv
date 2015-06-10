@@ -3,7 +3,7 @@ view.flowmap.colorScheme=Light
 
 data=csv
 data.csv.nodes.src=input_files/zip_nodes.csv
-data.csv.flows.src=input_files/flows/seasonweek_total_flows_rawPearson_percent90_S2.csv
+data.csv.flows.src=input_files/flows/seasonweek_age_flows_rawPearson_percent99_S4T.csv
 
 
 data.attrs.node.id=Code
@@ -21,3 +21,4 @@ map.background.boundingBox=-29.8556388740044,-25.9786624419214,62.8646609565205,
 map.projection=FlipY
 map.background.transparency=0.7
 
+window.settings.show=true
